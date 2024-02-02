@@ -31,3 +31,4 @@ version="$version_orig-0"
 	rm -r "$dir/src/debian/"{changelog,config,patches,patches-rt,rules.d}
 	cp -r debian/{config,patches,patches-rt,rules.d} "$dir/src/debian/"
 )
+version_suffix=gardenlinux0
