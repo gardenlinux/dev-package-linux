@@ -1,0 +1,33 @@
+pkg=linux
+version_orig=6.1.69
+version="$version_orig-0"
+
+(
+	kernel_repo=https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
+	debian_repo=https://salsa.debian.org/kernel-team/linux.git
+	debian_kernel_version_ref="debian/$version_orig-1"
+	debian_build_env_ref=e8e43f8550743f0f5603b6bb4f551f3c35416d88
+
+	tmp_dir="$(mktemp -d)"
+	trap 'cd / && rm -rf "$tmp_dir"' EXIT
+	cd "$tmp_dir"
+
+	apt-get install --no-install-recommends -y python3-debian
+
+	git clone --depth 1 --branch "$debian_kernel_version_ref" "$debian_repo" linux
+	cd linux
+
+	git checkout "$debian_kernel_version_ref"
+	debian/bin/genorig.py "$kernel_repo"
+	git clean -fdx
+
+	auto_decompress ../*.orig.tar.* | tee "$dir/orig.tar" | tar --extract --strip-components 1 --directory "$dir/src"
+
+	git fetch --depth 1 origin "$debian_build_env_ref"
+	git checkout "$debian_build_env_ref"
+	cp -r debian "$dir/src/"
+
+	git checkout "$debian_kernel_version_ref"
+	rm -r "$dir/src/debian/"{changelog,config,patches,patches-rt,rules.d}
+	cp -r debian/{config,patches,patches-rt,rules.d} "$dir/src/debian/"
+)
